@@ -27,6 +27,25 @@ Where
 Attribute 248 = NAND program operations initiated by the FTL layer.
 Attribute 247 = NAND program operations initiated by the host.
 
+Note that these SMART values are only shown by Micron SSDs. Samsung SSDs do
+not show this value.
+
+## Benchmarks
+
+### fio
+
+fio can be run with the following parameters
+
+--blocksize=4k 1M
+--ioengine=sync or libaio
+--direct=1 similar to O_DIRECT, this would cause reads to happen directly from disk instead of memory (default is 0 i.e. memory) (reads, not important!!)
+--fsync=0 tells linux to sync (flush data to memory) at its own convenience. (writes, important!!)
+--fio --name=randwrite --ioengine=libaio --iodepth=1 --rw=randwrite --bs=4k --direct=0 --size=512M --numjobs=8 --runtime=240 --group_reporting
+
+
+
+## References
+
 [1] Securely erasing your SSD - 
 https://askubuntu.com/questions/42266/what-is-the-recommended-way-to-empty-a-ssd
 
