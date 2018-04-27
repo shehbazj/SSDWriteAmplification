@@ -1,0 +1,59 @@
+1. run a VM on coeus.
+
+2. import /dev/sdb into the qemu VM.
+
+3. check the amount of writes done by the application, those done at the dm layer. those done at the disk layer (firmware).
+
+Measuring number of writes to disk:
+
+cat /sys/block/sda/stat
+(#3 - number of sectors read from disk
+#7 number of sectors written to disk)
+
+4. write scripts to analyze the following:
+
+Benchmark these:
+
+a. Access time (with and without) - for 3 file systems. For 3 workloads.
+Fstrim commands
+Fstrim -v /
+Fstrim -v /home
+To quantify how much gains we get from each of the file systems.
+
+b. Vm swap space:
+
+Increase or reduce this to see amount of writes to disk
+vm.swappiness=0 -> stops writes to swap space altogether, this might lead to out of memory errors.
+vm.swappiness=1
+And then vary the swappiness and vfs_cache_pressure values.
+
+# cat /proc/sys/vm/swappiness
+60
+vm.vfs_cache_pressure=50
+
+c. Effect of I/O scheduler:
+noop deadline [cfq]
+
+d. NVMe v/s SATA protocol block writes.
+
+e. Effect of hibernation and defragmentation.
+Disk defragmentation - measure number of writes on SSD.
+Hybernation - measure number of writes on SSD.
+
+f. Swap space and Trim Command:
+
+Swap space is important because operating system needs a temporary place to write and read data from. However, there are a lot of writes on the swap space. We can check how good/bad swap space is for reliability. Can we migrate swap space to a device that has better read/write performance/reliability? (NVME?).
+
+5. install rocksdb on /dev/sdc partition
+
+6. see how we can run TPC-C, OLTP and FIO benchmarks.
+
+7. [FUTURE] get data structure specific read and write insights.
+
+References:
+
+http://jensd.be/1/linux/ssd-optimize-your-linux
+ZRAM v/s swap space. Number of writes/performance.
+http://www.radianmemory.com/hot-topics-faq/ftl-ssds-not-nand-flash/
+http://accelazh.github.io/ssd/A-Summary-On-SSD-And-FTL
+http://codecapsule.com/2014/02/12/coding-for-ssds-part-1-introduction-and-table-of-contents/
