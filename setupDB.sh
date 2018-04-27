@@ -14,15 +14,21 @@
 # tpcc
 # oltp
 
-fsType="ext4"
-bm="fio"
+fsType=${1:-ext4}
+bm=${2:-fio}
 
 # create a file system
 
-mkfs.$fsType /dev/vda
+yes | mkfs.$fsType -f /dev/vda
+mount /dev/vda /mnt
 
 # run the benchmark from scripts folder
 
-./scripts/google_compute
-./scripts/aws_ebs
+if [[ $bm == "fio" ]]; then
+	./scripts/google_compute.sh 
+	#./scripts/aws_ebs.sh
+else
+	echo "cmd $bm not implemented"
+fi
 
+sudo umount /mnt
