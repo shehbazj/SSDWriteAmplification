@@ -1,8 +1,6 @@
-mount=$1
-$point=$2
 
 # Change this variable to the path of the device you want to test
-block_dev=/$mount/$point
+block_dev=/dev/vda
 
 # install dependencies
 #sudo apt-get -y update
@@ -11,10 +9,10 @@ block_dev=/$mount/$point
 echo "block_dev = $block_dev"
 
 # full write pass
-#sudo fio --name=writefile --size=10G --filesize=10G \
-#--filename=$block_dev --bs=1M --nrfiles=1 \
-#--direct=1 --sync=0 --randrepeat=0 --rw=write --refill_buffers --end_fsync=1 \
-#--iodepth=200 --ioengine=libaio
+sudo fio --name=writefile --size=10G --filesize=10G \
+--filename=$block_dev --bs=1M --nrfiles=1 \
+--direct=1 --sync=0 --randrepeat=0 --rw=write --refill_buffers --end_fsync=1 \
+--iodepth=200 --ioengine=libaio
 
 # rand read
 #sudo fio --time_based --name=benchmark --size=10G --runtime=30 \

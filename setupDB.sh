@@ -14,21 +14,25 @@
 # tpcc
 # oltp
 
+if [ $(id -u) -ne 0 ];
+then
+   echo "Please run as root";
+   exit 1
+fi
+
 fsType=${1:-ext4}
-bm=${2:-fio}
+bm=${2:-filebench}
 
 # create a file system
 
-yes | mkfs.$fsType -f /dev/vda
-mount /dev/vda /mnt
+yes | sudo mkfs.$fsType /dev/vda
+#sudo mount /dev/vda /mnt
 
 # run the benchmark from scripts folder
 
-if [[ $bm == "fio" ]]; then
-	./scripts/google_compute.sh 
-	#./scripts/aws_ebs.sh
+if [ $bm = "filebench" ]; then
 else
 	echo "cmd $bm not implemented"
 fi
 
-sudo umount /mnt
+#sudo umount /mnt
