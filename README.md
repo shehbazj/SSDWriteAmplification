@@ -32,17 +32,32 @@ not show this value.
 
 ## Benchmarks
 
-### fio
+### filebench
 
-fio can be run with the following parameters
+filebench consists of a set of file system related benchmarks. Important ones
+are 
 
-* --blocksize=4k 1M
-* --ioengine=sync or libaio
-* --direct=1 similar to O_DIRECT, this would cause reads to happen directly from disk instead of memory (default is 0 i.e. memory) (reads, not important!!)
-* --fsync=0 tells linux to sync (flush data to memory) at its own convenience. (writes, important!!)
-* --fio --name=randwrite --ioengine=libaio --iodepth=1 --rw=randwrite --bs=4k --direct=0 --size=512M --numjobs=8 --runtime=240 --group_reporting
+* web server - reads multiple files completely (simulating html file read requests) and closes the file. for each 10th file, the webserver issues a sync operation (eg. writing user data or cookie) into a log file. it would be interesting to see how filesystems behave with high "READ" and low "WRITE" (only user data being appended to a log file) workloads.
+* file server - consists of high number of users, who creates, writes, opens, appends, reads and deletes files. this resembles google-drive kind of workload. Hence, this workload is both READ and WRITE intensive.
+* mail server (varmail) - simulates a mail environment. small files created i.e. create, write and sync calls made. sometimes, files are read completely, marked as read, and fsynced. previously read emails are also read. Hence, there are whole reads, large writes and small intermittent writes as well.
 
-We are only interested in reporting reliability related issues. We are not interested in either performance or read operations.
+## Installation
+
+### filebench
+
+
+https://github.com/filebench/filebench/wiki
+
+Some pre-installation commands required:
+```
+aclocal
+autoheader
+autoconf
+libtoolize
+Automake --add-missing
+Install flex package
+```
+Another reference is here: https://github.com/firnsy/yubipam/issues/1
 
 ## References
 
