@@ -31,6 +31,7 @@ yes | sudo mkfs.$fsType /dev/vda
 # run the benchmark from scripts folder
 
 if [ $bm = "filebench" ]; then
+	
 else
 	echo "cmd $bm not implemented"
 fi
