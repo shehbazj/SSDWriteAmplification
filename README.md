@@ -32,17 +32,20 @@ not show this value.
 
 ## Benchmarks
 
-### fio
+### filebench
 
-fio can be run with the following parameters
+https://github.com/filebench/filebench/wiki
 
-* --blocksize=4k 1M
-* --ioengine=sync or libaio
-* --direct=1 similar to O_DIRECT, this would cause reads to happen directly from disk instead of memory (default is 0 i.e. memory) (reads, not important!!)
-* --fsync=0 tells linux to sync (flush data to memory) at its own convenience. (writes, important!!)
-* --fio --name=randwrite --ioengine=libaio --iodepth=1 --rw=randwrite --bs=4k --direct=0 --size=512M --numjobs=8 --runtime=240 --group_reporting
-
-We are only interested in reporting reliability related issues. We are not interested in either performance or read operations.
+Some pre-installation commands required:
+```
+aclocal
+autoheader
+autoconf
+libtoolize
+Automake --add-missing
+Install flex package
+```
+Another reference is here: https://github.com/firnsy/yubipam/issues/1
 
 ## References
 

@@ -21,7 +21,7 @@ then
 fi
 
 fsType=${1:-ext4}
-bm=${2:-fio}
+bm=${2:-filebench}
 
 # create a file system
 
@@ -30,9 +30,7 @@ yes | sudo mkfs.$fsType /dev/vda
 
 # run the benchmark from scripts folder
 
-if [ $bm = "fio" ]; then
-	./scripts/google_compute.sh 
-	#./scripts/aws_ebs.sh
+if [ $bm = "filebench" ]; then
 else
 	echo "cmd $bm not implemented"
 fi
