@@ -32,6 +32,19 @@ not show this value.
 
 ## Benchmarks
 
+### microbenchmarks
+
+located at microbench/\*
+
+* dirOnly
+* dirAndSmallFiles
+* largeFiles
+* gcHoles
+* hotAndCold
+* syncAfterWrite
+
+Each workload calls workload.py that generates a workload well suited to their liking
+
 ### filebench
 
 filebench consists of a set of file system related benchmarks. Important ones
