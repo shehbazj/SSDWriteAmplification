@@ -26,27 +26,71 @@
 
 import argparse
 import sys
+import random
+from random import randint
 
 def getRandom():
         x=''.join(random.choice('0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ/') for i in range(100))
         return x
 
-def fileOrDir():
-        return randint(0,1)
+def fileOrDir(fileOnly, dirOnly):
+	if fileOnly:
+		return 0
+	elif dirOnly:
+		return 1
+	else:
+        	return randint(0,1)
 
-def fsize():
-        return randint(1,1000)
+def getSize(sizeParam):
+	if 'KB' in sizeParam:
+		size = sizeParam.split('KB')[0]	
+		return int(size) * 1024
+	elif 'MB' in sizeParam:
+		size = sizeParam.split('MB')[0]
+		return int(size) * 1024 * 1024
+	elif 'GB' in sizeParam:
+		size = sizeParam.split('GB')[0]
+		return int(size) * 1024 * 1024 * 1024
+	else:
+		try:
+			int(sizeParam)
+		except ValueError:
+			print ("size " + sizeParam + " not a valid numeric ")
+		return int(sizeParam)
+	
+
+def fsize(minsize, maxsize):
+        return randint(minsize,maxsize)
 
 def getDirName( maxDepth ):
         x=''.join(random.choice('0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ/') for i in range(100))
         if x.count('/') > maxDepth - 1:
-                print('found ' + str(x.count('/')) + ' no of / in string '+ x)
                 x = x.replace("/","X")
         else:   
                 while "//" in x:
-                        print('found /// in string '+ x)
                         x = x.replace("//","X")
+	if x.startswith("/"):
+		x = x.replace("/","X",1)
         return x
+
+def createDir(dirName):
+	allDirs = dirName.split('/')
+	parent = '/mnt/'
+	for dirs in allDirs:
+		parent += dirs
+		parent += '/'
+		print ('sudo -- sh -c \'mkdir -p ' + parent + '\'')
+
+def createFile(dirName,minFile, maxFile,fileNumber):
+	fileName='/mnt/'+dirName+'/file'+str(fileNumber)
+	fileSize=fsize(minFile,maxFile)
+	#print ('fileSize = '+str(fileSize))
+	#print ('fileSize = '+str((fileSize + 4095 ) / 4096) +' KB')
+	count=((fileSize + 4095) / 4096)
+	#print ('count = ' + str(count))
+	print ('sudo -- sh -c \'dd if=/dev/urandom of=' + fileName + ' bs=4096 count='+str(count))
+	return fileSize
+
 
 if __name__ == "__main__":
 	parser = argparse.ArgumentParser(description='Generate Shell Commands for creating/reading and writing data')
@@ -59,7 +103,7 @@ if __name__ == "__main__":
 	parser_create.add_argument('--numFiles',type=int,required=True)
 	parser_create.add_argument('--minFileSize',type=str,default='4096', help=' (add KB, MB or GB. defaults to bytes)')	
 	parser_create.add_argument('--maxFileSize',type=str,default='1MB',help=' (add KB, MB or GB. defaults to bytes)')
-	parser_create.add_argument('--totalSpaceAllocation',type=int,help='Percentage of disk that needs to be filled')
+	parser_create.add_argument('--totalSpaceAllocation',type=str,default='10MB',help='Percentage of disk that needs to be filled')
 	parser_create.add_argument('--fileOnly',type=bool, default=False)
 	parser_create.add_argument('--dirOnly',type=bool, default=False)
 	parser_create.add_argument('--syncFreq',type=int,default=100)
@@ -90,22 +134,30 @@ if __name__ == "__main__":
 
 # if create:
 
-if args.numFiles is not None:
-	maxDirDepth = args.maxDirDepth
-	numFiles = args.numFiles
-	minFileSize = args.minFileSize
-	maxFileSize = args.maxFileSize
-	totalSpaceAllocation = args.totalSpaceAllocation
-	fileOnly = args.fileOnly
-	dirOnly = args.dirOnly
-	syncFreq = args.syncFreq
-#	print 'Parameters accepted'
-#	print 'maxDirDepth '+str(maxDirDepth)+' numFiles '+str(numFiles)+' minFileSize '+str(minFileSize) +' maxFileSize '+str(maxFileSize) +' totalSpaceAllocation '+str(totalSpaceAllocation)+' fileOnly '+str(fileOnly)+' dirOnly '+str(dirOnly) +' syncFreq '+str(syncFreq)
-	for i in range (1,numFiles):
-		if totalSpaceAllocation <= 0:
-			break
-									
-		
+	if args.numFiles is not None:
+		maxDirDepth = int(args.maxDirDepth)
+		numFiles = int(args.numFiles)
+		minFileSize = getSize(args.minFileSize)
+		maxFileSize = getSize(args.maxFileSize)
+		totalSpaceAllocation = getSize(args.totalSpaceAllocation)
+		fileOnly = args.fileOnly
+		dirOnly = args.dirOnly
+		syncFreq = args.syncFreq
+
+		for i in range (1,numFiles):
+			if totalSpaceAllocation <= 0:
+				break
+			dirName = getDirName(maxDirDepth)
+			ftype = fileOrDir(fileOnly, dirOnly)
+			createDir(dirName)
+			if ftype is 0: # file
+				fileSize = createFile(dirName,minFileSize, maxFileSize,i)
+				totalSpaceAllocation -= fileSize
+			if i % syncFreq == 0:
+				printSyncCommand()
+	else:
+		print 'numFiles = ' + str(args.numFiles)
+			
 	
 # if delete:
 
