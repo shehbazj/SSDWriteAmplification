@@ -26,6 +26,7 @@
 
 import argparse
 import sys
+import subprocess
 import random
 from random import randint
 
@@ -81,25 +82,46 @@ def createDir(dirName):
 		parent += '/'
 		print ('sudo -- sh -c \'mkdir -p ' + parent + '\'')
 
+def getAvailableDiskSpace():
+	cmd = ['df','/dev/sdc']
+        p = subprocess.Popen(cmd, stdout=subprocess.PIPE,stderr=subprocess.PIPE,stdin=subprocess.PIPE)
+        out,err = p.communicate()
+        return (int(out.split('\n')[1].split()[3]) * 1024)
+
 def createFile(dirName,minFile, maxFile,fileNumber):
-	fileName='/mnt/'+dirName+'/file'+str(fileNumber)
+	fileName=dirName+'/file'+str(fileNumber)
 	fileSize=fsize(minFile,maxFile)
 	#print ('fileSize = '+str(fileSize))
 	#print ('fileSize = '+str((fileSize + 4095 ) / 4096) +' KB')
 	count=((fileSize + 4095) / 4096)
 	#print ('count = ' + str(count))
-	print ('sudo -- sh -c \'dd if=/dev/urandom of=' + fileName + ' bs=4096 count='+str(count))
+	print ('sudo -- sh -c \'dd if=/dev/urandom of=' + fileName + ' bs=4096 count='+str(count)+'\'')
 	return fileSize
 
+def getAllDirList():
+	cmd = [ 'ls','-R' ,'/mnt/']
+	p = subprocess.Popen(cmd, stdout=subprocess.PIPE,stdin=subprocess.PIPE,stderr=subprocess.PIPE)
+	out , err = p.communicate()
+#	print (out)
+	out = list(out.split('\n'))
+#	print(out)
+	allDirs = []
+	for element in out:
+	#	print(element)
+		if ':' in element:
+			allDirs.append(element.split(':')[0])
+	return allDirs
+
+#def getRandomDir(dirList):	
 
 if __name__ == "__main__":
 	parser = argparse.ArgumentParser(description='Generate Shell Commands for creating/reading and writing data')
-	subparsers = parser.add_subparsers(help='create|fillSpace|delete|update help')
+	subparsers = parser.add_subparsers(help='create|fillSpace|delete|update help',dest='command')
 
 	# create
 
 	parser_create = subparsers.add_parser('create', help='creates files and directories in an empty file system')
-	parser_create.add_argument('--maxDirDepth',type=int,required=True)
+	parser_create.add_argument('--maxDirDepth',type=int,default=5)
 	parser_create.add_argument('--numFiles',type=int,required=True)
 	parser_create.add_argument('--minFileSize',type=str,default='4096', help=' (add KB, MB or GB. defaults to bytes)')	
 	parser_create.add_argument('--maxFileSize',type=str,default='1MB',help=' (add KB, MB or GB. defaults to bytes)')
@@ -111,8 +133,9 @@ if __name__ == "__main__":
 	# fillSpace (does not take numFiles)
 
 	parser_fillSpace = subparsers.add_parser('fillSpace', help='needs a file system that already has data')
-
-	parser_fillSpace.add_argument('--minFileSize',type=str,default='4096', help=' (add KB, MB or GB. defaults to bytes)')	
+	parser_fillSpace.add_argument('--size',type=int,required=True, help=' percentage of remaining space to be filled (between 1-99)',choices=range(1,100))
+	parser_fillSpace.add_argument('--maxDirDepth',type=int,default=5)
+	parser_fillSpace.add_argument('--minFileSize',type=str,default='4096', help=' (add KB, MB or GB. defaults to bytes)')
 	parser_fillSpace.add_argument('--maxFileSize',type=str,default='1MB',help=' (add KB, MB or GB. defaults to bytes)')
 	parser_fillSpace.add_argument('--syncFreq',type=int,required=True)
 
@@ -125,6 +148,8 @@ if __name__ == "__main__":
 	parser_update.add_argument('--size',type=int,help='Percentage of disk that needs to be filled', required=True)
 	args = parser.parse_args()
 
+	command = args.command
+
 ##############################################################################################
 
 # parsing complete
@@ -134,7 +159,7 @@ if __name__ == "__main__":
 
 # if create:
 
-	if args.numFiles is not None:
+	if command == "create":
 		maxDirDepth = int(args.maxDirDepth)
 		numFiles = int(args.numFiles)
 		minFileSize = getSize(args.minFileSize)
@@ -147,19 +172,40 @@ if __name__ == "__main__":
 		for i in range (1,numFiles):
 			if totalSpaceAllocation <= 0:
 				break
-			dirName = getDirName(maxDirDepth)
+			dirName = '/mnt/'+getDirName(maxDirDepth)
 			ftype = fileOrDir(fileOnly, dirOnly)
 			createDir(dirName)
 			if ftype is 0: # file
 				fileSize = createFile(dirName,minFileSize, maxFileSize,i)
 				totalSpaceAllocation -= fileSize
-			if i % syncFreq == 0:
-				printSyncCommand()
-	else:
-		print 'numFiles = ' + str(args.numFiles)
-			
+		# 	TODO syncFrequency
+		# 	sort the print commands in increasing order of '/' count.
+		#	add sync command after each syncFrequency interval
+		#	if i % syncFreq == 0:
+		#		printSyncCommand()
+
+#if fillSpace
+	elif command == "fillSpace":
+		totalSpaceAllocation = (args.size * getAvailableDiskSpace()) / 100
+		minFileSize = getSize(args.minFileSize)
+		maxFileSize = getSize(args.maxFileSize)
+		syncFreq = args.syncFreq
+		allDirs = getAllDirList()
+		fileIndex = 99999
+
+		while totalSpaceAllocation > 0:
+			ftype = fileOrDir(False,False)
+			dirName = allDirs[randint(1,len(allDirs) - 1)]
+			fileSize = createFile(dirName, minFileSize, maxFileSize, fileIndex)
+			fileIndex += 1
+			totalSpaceAllocation -= fileSize
 	
 # if delete:
-
+	elif command == "delete":
+			
 
 # if update:
+	elif command == "update":
+
+	else:
+		print "Please enter a valid command"	
