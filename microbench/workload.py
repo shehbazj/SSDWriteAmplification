@@ -114,6 +114,16 @@ def getAllDirList():
 
 #def getRandomDir(dirList):	
 
+def getAllFileList():
+	cmd = [ 'find', '/mnt', '-type', 'f' ]
+	p = subprocess.Popen(cmd, stdout=subprocess.PIPE,stdin=subprocess.PIPE,stderr=subprocess.PIPE)
+	out , err = p.communicate()
+	return list(out.split('\n'))
+	return allFiles
+
+def deleteFile(fileName):
+	print ('sudo -- sh -c \'rm '+ fileName + '\'')
+
 if __name__ == "__main__":
 	parser = argparse.ArgumentParser(description='Generate Shell Commands for creating/reading and writing data')
 	subparsers = parser.add_subparsers(help='create|fillSpace|delete|update help',dest='command')
@@ -141,7 +151,7 @@ if __name__ == "__main__":
 
 	# delete (does not take minFileSize)
 	parser_delete = subparsers.add_parser('delete', help='needs a filesystem that already has data')
-	parser_delete.add_argument('--size',type=int,help='Percentage of disk that needs to be filled (in %)', required=True)
+	parser_delete.add_argument('--size',type=int,help='Percentage of disk that needs to be filled (in %)', required=True, choices=range(1,100))
 
 	# update (does not take minFileSize, takes syncFreq)
 	parser_update = subparsers.add_parser('update', help='needs a filesystem that already has data')
@@ -202,10 +212,14 @@ if __name__ == "__main__":
 	
 # if delete:
 	elif command == "delete":
-			
+		deletePercentage = args.size	
+		allFiles = getAllFileList()
+		numFilesToDelete = len(allFiles) * deletePercentage / 100
+		for i in range(1, numFilesToDelete):
+			deleteFile(allFiles[randint(1,len(allFiles) - 1)])
 
 # if update:
 	elif command == "update":
-
+		print('update')
 	else:
-		print "Please enter a valid command"	
+		print("Please enter a valid command")
