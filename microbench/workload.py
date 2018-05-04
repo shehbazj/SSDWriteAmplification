@@ -21,6 +21,7 @@
 
 # update
 #	X% of disk
+#	minFileSize, maxFileSize
 #	syncFreq (by default 100)
 #	this command would open, update (append or overwrite) existing file.
 
@@ -91,12 +92,39 @@ def getAvailableDiskSpace():
 def createFile(dirName,minFile, maxFile,fileNumber):
 	fileName=dirName+'/file'+str(fileNumber)
 	fileSize=fsize(minFile,maxFile)
-	#print ('fileSize = '+str(fileSize))
-	#print ('fileSize = '+str((fileSize + 4095 ) / 4096) +' KB')
 	count=((fileSize + 4095) / 4096)
-	#print ('count = ' + str(count))
 	print ('sudo -- sh -c \'dd if=/dev/urandom of=' + fileName + ' bs=4096 count='+str(count)+'\'')
 	return fileSize
+
+def overWriteFile(fileName, startIndex, endIndex):
+	seekOffset = startIndex / 4096
+	count = (endIndex - startIndex) / 4096
+	print ('sudo -- sh -c \'dd if=/dev/urandom of='+fileName+' bs=4096 count='+str(count)+' seek='+str(seekOffset)+' conv=notrunc\'')
+
+def getFileSize(fileName):
+#	stat --printf="%s" /mnt/7A6PL/file100112
+	cmd = ['stat','--printf=\"%s\"',fileName]
+        p = subprocess.Popen(cmd, stdout=subprocess.PIPE,stderr=subprocess.PIPE,stdin=subprocess.PIPE)
+        out,err = p.communicate()
+	out = out.replace('"','')
+	#print(out.split(' '))
+	return int(out)
+
+def updateFile(fileName,updateType,minFileSize,maxFileSize):
+	fileSize = getFileSize(fileName)
+	#print type(fileSize)
+	if updateType == 0:
+		# same size
+		overWriteFile(fileName, 0 , fileSize )
+	elif updateType == 1:
+		# append
+		overWriteFile(fileName, fileSize , randint(fileSize, min(fileSize + maxFileSize, maxFileSize)))
+	elif updateType == 2:
+		# different size
+		overWriteFile(fileName, 0 , randint(minFileSize, maxFileSize))
+	elif updateType == 3:
+		# random blocks within same file
+		overWriteFile(fileName, randint(0, fileSize / 2) , randint( (fileSize + 2) / 2, fileSize))
 
 def getAllDirList():
 	cmd = [ 'ls','-R' ,'/mnt/']
@@ -152,12 +180,14 @@ if __name__ == "__main__":
 	# delete (does not take minFileSize)
 	parser_delete = subparsers.add_parser('delete', help='needs a filesystem that already has data')
 	parser_delete.add_argument('--size',type=int,help='Percentage of disk that needs to be filled (in %)', required=True, choices=range(1,100))
-
 	# update (does not take minFileSize, takes syncFreq)
 	parser_update = subparsers.add_parser('update', help='needs a filesystem that already has data')
-	parser_update.add_argument('--size',type=int,help='Percentage of disk that needs to be filled', required=True)
-	args = parser.parse_args()
+	parser_update.add_argument('--size',type=int,help='Percentage of disk that needs to be filled', required=True, choices=range(1,100))
+	parser_update.add_argument('--minFileSize',type=str,default='4096', help=' (add KB, MB or GB. defaults to bytes)')
+	parser_update.add_argument('--maxFileSize',type=str,default='1MB',help=' (add KB, MB or GB. defaults to bytes)')
+	parser_update.add_argument('--syncFreq',type=int,required=True)
 
+	args = parser.parse_args()
 	command = args.command
 
 ##############################################################################################
@@ -219,7 +249,20 @@ if __name__ == "__main__":
 			deleteFile(allFiles[randint(1,len(allFiles) - 1)])
 
 # if update:
+	# overwrite file completely, of the same size.
+	# append to file.
+	# overwrite file completely, of different size.
+	# overwrite few blocks of file
 	elif command == "update":
-		print('update')
+	#	print('update')
+		size = args.size
+		minFileSize = getSize(args.minFileSize)
+		maxFileSize = getSize(args.maxFileSize)
+		syncFreq = args.syncFreq
+		allFiles = getAllFileList()
+		numFiles = (len(allFiles) * size) / 100
+		for i in range(0,numFiles - 1):
+			fileName = allFiles[randint(0, len(allFiles) - 1)]
+			updateFile(fileName,randint(0,4),minFileSize,maxFileSize)
 	else:
 		print("Please enter a valid command")
