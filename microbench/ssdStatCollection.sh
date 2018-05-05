@@ -1,7 +1,9 @@
 # This script collects SSD statistics. We collect three primary statistics:
 
-# SMART Counter 247 - NAND Program Operations Initiated by Host
-# SMART Counter 248 - NAND Program Operations Initiated by FTL Layer
+# SMART Counter 246 - Number of Writes made by Host (Total_Host_Sector_Write) = Host_Program_Page_Count * 16
+# SMART Counter 247 - NAND Program Operations Initiated by Host (Host_Program_Page_Count)
+# SMART Counter 248 - NAND Program Operations Initiated by FTL Layer (Bckgnd_Program_Page_Cnt)
+
 # we collect periodic statistics (per second).
 # at the end we also map cumulative statistics. 
 
@@ -22,7 +24,7 @@ fi
 
 startstop=$1
 timeInterval=${2:-5}
-device=${3:-'/dev/sdb'}
+device=${3:-'/dev/sdd'}
 
 if [[ "$startstop" = "start" ]]; then
 	echo "start collection script"
@@ -30,7 +32,7 @@ if [[ "$startstop" = "start" ]]; then
 		echo "Process already running"
 		exit
 	else
-		./diskStat.sh $timeInterval $device
+		sudo ./diskStat.sh $timeInterval $device
 	fi
 	
 elif [[ "$startstop" = "stop" ]]; then
