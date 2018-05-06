@@ -79,18 +79,20 @@ def createDir(dirName):
 	allDirs = dirName.split('/')
 	parent = '/mnt/'
 	for dirs in allDirs:
+		if dirs.endswith("/") or dirs is '' or dirs is None:
+			continue
 		parent += dirs
 		parent += '/'
-		print ('sudo -- sh -c \'mkdir -p ' + parent + '\'')
+		print ('sudo -- sh -c \'mkdir ' + parent + '\'')
 
 def getAvailableDiskSpace():
-	cmd = ['df','/dev/sdc']
+	cmd = ['df','/dev/sdd']
         p = subprocess.Popen(cmd, stdout=subprocess.PIPE,stderr=subprocess.PIPE,stdin=subprocess.PIPE)
         out,err = p.communicate()
         return (int(out.split('\n')[1].split()[3]) * 1024)
 
 def createFile(dirName,minFile, maxFile,fileNumber):
-	fileName=dirName+'/file'+str(fileNumber)
+	fileName='/mnt/'+dirName+'/file'+str(fileNumber)
 	fileSize=fsize(minFile,maxFile)
 	count=((fileSize + 4095) / 4096)
 	print ('sudo -- sh -c \'dd if=/dev/urandom of=' + fileName + ' bs=4096 count='+str(count)+'\'')
@@ -102,7 +104,6 @@ def overWriteFile(fileName, startIndex, endIndex):
 	print ('sudo -- sh -c \'dd if=/dev/urandom of='+fileName+' bs=4096 count='+str(count)+' seek='+str(seekOffset)+' conv=notrunc\'')
 
 def getFileSize(fileName):
-#	stat --printf="%s" /mnt/7A6PL/file100112
 	cmd = ['stat','--printf=\"%s\"',fileName]
         p = subprocess.Popen(cmd, stdout=subprocess.PIPE,stderr=subprocess.PIPE,stdin=subprocess.PIPE)
         out,err = p.communicate()
@@ -212,7 +213,7 @@ if __name__ == "__main__":
 		for i in range (1,numFiles):
 			if totalSpaceAllocation <= 0:
 				break
-			dirName = '/mnt/'+getDirName(maxDirDepth)
+			dirName = getDirName(maxDirDepth)
 			ftype = fileOrDir(fileOnly, dirOnly)
 			createDir(dirName)
 			if ftype is 0: # file
