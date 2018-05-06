@@ -32,7 +32,7 @@ import random
 from random import randint
 
 def getRandom():
-        x=''.join(random.choice('0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ/') for i in range(100))
+        x=''.join(random.choice('0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ/') for i in range(1000))
         return x
 
 def fileOrDir(fileOnly, dirOnly):
