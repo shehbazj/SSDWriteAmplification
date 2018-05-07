@@ -164,7 +164,7 @@ if __name__ == "__main__":
 	parser_create.add_argument('--numFiles',type=int,required=True)
 	parser_create.add_argument('--minFileSize',type=str,default='4096', help=' (add KB, MB or GB. defaults to bytes)')	
 	parser_create.add_argument('--maxFileSize',type=str,default='1MB',help=' (add KB, MB or GB. defaults to bytes)')
-	parser_create.add_argument('--totalSpaceAllocation',type=str,default='10MB',help='Percentage of disk that needs to be filled')
+	parser_create.add_argument('--totalSpaceAllocation',type=str,default='1GB',help='Amount of disk that needs to be filled, default 1GB')
 	parser_create.add_argument('--fileOnly',type=bool, default=False)
 	parser_create.add_argument('--dirOnly',type=bool, default=False)
 	parser_create.add_argument('--syncFreq',type=int,default=100)
